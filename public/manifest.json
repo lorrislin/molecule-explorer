@@ -1,0 +1,18 @@
+{
+  "name": "分子探險",
+  "short_name": "分子探險",
+  "description": "用手指旋轉、縮放，認識身邊分子的立體形狀。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#140c2e",
+  "theme_color": "#160c36",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
