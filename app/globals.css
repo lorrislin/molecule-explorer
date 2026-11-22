@@ -270,25 +270,38 @@ button:disabled {
 }
 
 .polarity-toggle {
-  width: 100%;
-  min-height: 48px;
-  margin-top: 10px;
-  border: 0;
-  border-radius: 16px;
-  background: #efe6ff;
-  color: var(--ink);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(18, 10, 36, 0.42);
+  color: #fff8ea;
+  font-size: 0.95rem;
   font-weight: 800;
-  box-shadow: 0 3px 0 #c9b6ea;
+  line-height: 1;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .polarity-toggle.on {
-  background: var(--yellow);
-  box-shadow: 0 3px 0 #c9a400;
+  background: rgba(255, 225, 74, 0.94);
+  color: var(--ink);
+  border-color: transparent;
 }
 
 .polarity-toggle:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #c9a400;
+  transform: translateY(1px);
 }
 
 .polarity-note,

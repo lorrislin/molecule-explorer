@@ -30,6 +30,8 @@ export default function Viewer() {
     const stage = stageRef.current;
     if (!stage) return;
     const block = (event: TouchEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".polarity-toggle")) return;
       event.preventDefault();
     };
     const blockGesture = (event: Event) => {
@@ -108,6 +110,16 @@ export default function Viewer() {
             resetToken={resetToken}
             showPolarity={showPolarity}
           />
+          <button
+            type="button"
+            className={showPolarity ? "polarity-toggle on" : "polarity-toggle"}
+            aria-pressed={showPolarity}
+            aria-label={showPolarity ? "關閉極性顯示" : "顯示極性"}
+            onClick={() => setShowPolarity((on) => !on)}
+          >
+            <span aria-hidden="true">δ±</span>
+            極性
+          </button>
         </div>
 
         <section className="picker" aria-label="選擇分子">
@@ -138,14 +150,6 @@ export default function Viewer() {
               {molecule.name} <Formula value={molecule.formula} />
             </h2>
           </div>
-          <button
-            type="button"
-            className={showPolarity ? "polarity-toggle on" : "polarity-toggle"}
-            aria-pressed={showPolarity}
-            onClick={() => setShowPolarity((on) => !on)}
-          >
-            顯示極性
-          </button>
           <p className="blurb">{molecule.blurb}</p>
           <p className="polarity-note">{molecule.polarityNote}</p>
           {showPolarity ? (
