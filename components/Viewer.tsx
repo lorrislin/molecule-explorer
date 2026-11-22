@@ -17,6 +17,7 @@ export default function Viewer() {
   const [moleculeId, setMoleculeId] = useState(molecules[0].id);
   const [atomId, setAtomId] = useState<string | null>(null);
   const [resetToken, setResetToken] = useState(0);
+  const [showPolarity, setShowPolarity] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const molecule = useMemo(() => getMolecule(moleculeId), [moleculeId]);
   const selected = molecule.atoms.find((atom) => atom.id === atomId) ?? null;
@@ -79,7 +80,10 @@ export default function Viewer() {
             <span className="mark-h mark-h2" />
           </span>
           <div>
-            <h1>分子探險</h1>
+            <h1>
+              <span className="title-line">小貿老師給阿陶阿墨的</span>
+              <span className="title-line">分子探險教室</span>
+            </h1>
             <p className="hint-touch">單指旋轉 · 雙指縮放 · 點原子</p>
             <p className="hint-mouse">拖曳旋轉 · 滾輪縮放 · 點原子</p>
           </div>
@@ -102,6 +106,7 @@ export default function Viewer() {
             selectedAtomId={selected ? selected.id : null}
             onSelectAtom={setAtomId}
             resetToken={resetToken}
+            showPolarity={showPolarity}
           />
         </div>
 
@@ -111,7 +116,19 @@ export default function Viewer() {
               {molecule.name} <Formula value={molecule.formula} />
             </h2>
           </div>
+          <button
+            type="button"
+            className={showPolarity ? "polarity-toggle on" : "polarity-toggle"}
+            aria-pressed={showPolarity}
+            onClick={() => setShowPolarity((on) => !on)}
+          >
+            顯示極性
+          </button>
           <p className="blurb">{molecule.blurb}</p>
+          <p className="polarity-note">{molecule.polarityNote}</p>
+          {showPolarity ? (
+            <p className="polarity-key">紅暈是 δ− 或部分負電，藍暈是 δ+ 或部分正電。黃箭頭指向比較負的那一端。</p>
+          ) : null}
           <div className="fact-slot" aria-live="polite">
             {selected ? (
               <article className="atom-card">

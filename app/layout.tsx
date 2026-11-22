@@ -4,13 +4,13 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "分子探險",
+  title: "小貿老師給阿陶阿墨的分子探險教室",
   description: "用手指旋轉、縮放的立體分子模型。認識水、二氧化碳、葡萄糖、食鹽和咖啡因的形狀。",
-  applicationName: "分子探險",
+  applicationName: "小貿老師給阿陶阿墨的分子探險教室",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "分子探險",
+    title: "分子探險教室",
     statusBarStyle: "black-translucent",
   },
   icons: {

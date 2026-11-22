@@ -1,4 +1,5 @@
 import { ELEMENTS } from "@/lib/elements";
+import { applyPolarity } from "@/lib/polarity";
 import {
   add,
   centroid,
@@ -73,7 +74,17 @@ function molecule(
   draft: Draft,
 ): Molecule {
   const centered = center(draft);
-  return { id, name, formula, blurb, accent, atoms: centered.atoms, bonds: centered.bonds };
+  return applyPolarity({
+    id,
+    name,
+    formula,
+    blurb,
+    polarityNote: "",
+    dipole: null,
+    accent,
+    atoms: centered.atoms,
+    bonds: centered.bonds,
+  });
 }
 
 function water(): Draft {

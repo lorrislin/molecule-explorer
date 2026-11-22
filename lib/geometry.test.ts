@@ -187,4 +187,22 @@ assert.ok(Math.abs(distance(pos(caffeine, "C2"), pos(caffeine, "O2")) - 1.22) < 
 assert.ok(distance(pos(caffeine, "C4"), pos(caffeine, "C5")) > 1.2);
 assert.ok(distance(pos(caffeine, "N9"), pos(caffeine, "C8")) > 1.2);
 
+assert.ok(water.dipole, "water should have a dipole");
+assert.ok(water.atoms.find((atom) => atom.id === "O")?.charge?.value! < 0);
+assert.ok(water.atoms.filter((atom) => atom.element === "H").every((atom) => (atom.charge?.value ?? 0) > 0));
+const waterO = pos(water, "O");
+const towardOxygen =
+  water.dipole[0] * waterO[0] + water.dipole[1] * waterO[1] + water.dipole[2] * waterO[2];
+assert.ok(towardOxygen > 0, "water dipole should point toward oxygen");
+
+assert.equal(byId("co2").dipole, null);
+assert.equal(byId("methane").dipole, null);
+assert.equal(byId("oxygen").dipole, null);
+assert.ok(byId("oxygen").atoms.every((atom) => !atom.charge));
+assert.ok(byId("ammonia").dipole, "ammonia should have a dipole");
+assert.equal(byId("salt").dipole, null);
+assert.equal(byId("salt").atoms.find((atom) => atom.element === "Na")?.charge?.label, "Na⁺");
+assert.equal(byId("salt").atoms.find((atom) => atom.element === "Cl")?.charge?.label, "Cl⁻");
+assert.ok(molecules.every((item) => item.polarityNote.length > 12));
+
 console.log(`geometry ok (${molecules.length} molecules)`);

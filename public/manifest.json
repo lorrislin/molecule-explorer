@@ -1,6 +1,6 @@
 {
-  "name": "分子探險",
-  "short_name": "分子探險",
+  "name": "小貿老師給阿陶阿墨的分子探險教室",
+  "short_name": "分子探險教室",
   "description": "用手指旋轉、縮放，認識身邊分子的立體形狀。",
   "start_url": "/",
   "display": "standalone",

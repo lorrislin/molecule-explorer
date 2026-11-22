@@ -2,18 +2,20 @@
 
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { BackSide, MOUSE, Quaternion, TOUCH, Vector3, type PerspectiveCamera } from "three";
+import { BackSide, CanvasTexture, MOUSE, Quaternion, TOUCH, Vector3, type PerspectiveCamera } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { ELEMENTS } from "@/lib/elements";
 import { moleculeExtent } from "@/lib/molecules";
-import type { Atom, Bond, Molecule } from "@/lib/types";
+import type { Atom, AtomCharge, Bond, Molecule } from "@/lib/types";
+import type { Vec3 } from "@/lib/math";
 
 type MoleculeCanvasProps = {
   molecule: Molecule;
   selectedAtomId: string | null;
   onSelectAtom: (id: string | null) => void;
   resetToken: number;
+  showPolarity: boolean;
 };
 
 type PointerState = {
@@ -220,18 +222,119 @@ function BondMesh({ bond, atomById, gap }: { bond: Bond; atomById: Map<string, A
   );
 }
 
+const labelTextures = new Map<string, CanvasTexture>();
+
+function roundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function chargeTexture(charge: AtomCharge): CanvasTexture {
+  const key = `${charge.label}|${charge.caption ?? ""}|${charge.value < 0 ? "n" : "p"}`;
+  const cached = labelTextures.get(key);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = charge.caption ? 280 : 200;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("無法建立極性標籤");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(16, 10, 32, 0.78)";
+  roundedRect(ctx, 16, 16, canvas.width - 32, canvas.height - 32, 48);
+  ctx.fill();
+  ctx.fillStyle = charge.value < 0 ? "#ffb4bc" : "#c5dcff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "700 128px sans-serif";
+  ctx.fillText(charge.label, canvas.width / 2, charge.caption ? 108 : canvas.height / 2);
+  if (charge.caption) {
+    ctx.font = "700 64px sans-serif";
+    ctx.fillText(charge.caption, canvas.width / 2, 200);
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  labelTextures.set(key, texture);
+  return texture;
+}
+
+function ChargeLabel({ atom }: { atom: Atom }) {
+  const charge = atom.charge;
+  const texture = useMemo(() => (charge ? chargeTexture(charge) : null), [charge]);
+  if (!charge || !texture) return null;
+  const info = ELEMENTS[atom.element];
+  const reach = Math.hypot(atom.position[0], atom.position[1], atom.position[2]);
+  const outward: Vec3 = reach < 0.15 ? [0, 1, 0] : [atom.position[0] / reach, atom.position[1] / reach, atom.position[2] / reach];
+  const gap = info.radius + (charge.size === "small" ? 0.48 : 0.7);
+  const width = charge.size === "small" ? 0.78 : 1.15;
+  const height = width * ((charge.caption ? 280 : 200) / 512);
+  return (
+    <sprite position={[atom.position[0] + outward[0] * gap, atom.position[1] + outward[1] * gap, atom.position[2] + outward[2] * gap]} scale={[width, height, 1]}>
+      <spriteMaterial map={texture} transparent depthWrite={false} />
+    </sprite>
+  );
+}
+
+function sideOffset(direction: Vec3, distance: number): Vec3 {
+  const view: Vec3 = [0.55, 0.4, 0.82];
+  const cross: Vec3 = [
+    direction[1] * view[2] - direction[2] * view[1],
+    direction[2] * view[0] - direction[0] * view[2],
+    direction[0] * view[1] - direction[1] * view[0],
+  ];
+  const len = Math.hypot(cross[0], cross[1], cross[2]) || 1;
+  return [(cross[0] / len) * distance, (cross[1] / len) * distance, (cross[2] / len) * distance];
+}
+
+function DipoleArrow({ direction, radius }: { direction: Vec3; radius: number }) {
+  const quaternion = useMemo(
+    () => new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), new Vector3(direction[0], direction[1], direction[2]).normalize()),
+    [direction],
+  );
+  const length = Math.max(1.35, radius * 1.35);
+  const head = length * 0.34;
+  const shaft = length - head;
+  const offset = sideOffset(direction, Math.max(0.45, radius * 0.42));
+  return (
+    <group position={offset} quaternion={quaternion}>
+      <mesh position={[0, -head / 2, 0]}>
+        <cylinderGeometry args={[Math.max(0.03, radius * 0.02), Math.max(0.03, radius * 0.02), shaft, 12]} />
+        <meshStandardMaterial color="#ffe14a" emissive="#ffc107" emissiveIntensity={0.7} />
+      </mesh>
+      <mesh position={[0, shaft / 2, 0]}>
+        <coneGeometry args={[Math.max(0.12, radius * 0.1), head, 18]} />
+        <meshStandardMaterial color="#ffe14a" emissive="#ffc107" emissiveIntensity={0.75} />
+      </mesh>
+    </group>
+  );
+}
+
 function AtomMesh({
   atom,
   selected,
+  showPolarity,
   onSelect,
   pointer,
 }: {
   atom: Atom;
   selected: boolean;
+  showPolarity: boolean;
   onSelect: (id: string) => void;
   pointer: RefObject<PointerState>;
 }) {
   const info = ELEMENTS[atom.element];
+  const tint = showPolarity && atom.charge ? (atom.charge.value < 0 ? "#ff5b6a" : "#5b93ff") : null;
 
   return (
     <group position={atom.position}>
@@ -243,12 +346,18 @@ function AtomMesh({
         <sphereGeometry args={[info.radius, 32, 32]} />
         <meshStandardMaterial
           color={info.color}
-          emissive={selected ? info.color : "#000000"}
-          emissiveIntensity={selected ? 0.42 : 0}
+          emissive={tint ?? (selected ? info.color : "#000000")}
+          emissiveIntensity={tint ? 0.62 : selected ? 0.42 : 0}
           roughness={atom.element === "H" ? 0.38 : 0.34}
           metalness={0.06}
         />
       </mesh>
+      {tint ? (
+        <mesh>
+          <sphereGeometry args={[info.radius * 1.22, 24, 24]} />
+          <meshBasicMaterial color={tint} transparent opacity={0.32} depthWrite={false} />
+        </mesh>
+      ) : null}
       {selected ? (
         <mesh>
           <sphereGeometry args={[info.radius * 1.34, 24, 24]} />
@@ -276,18 +385,21 @@ function Scene({
   selectedAtomId,
   onSelectAtom,
   resetToken,
+  showPolarity,
   pointer,
 }: MoleculeCanvasProps & { pointer: RefObject<PointerState> }) {
   const atomById = useMemo(() => new Map(molecule.atoms.map((atom) => [atom.id, atom])), [molecule]);
   const radius = moleculeExtent(molecule);
   const bondGap = Math.max(0.16, radius * 0.09);
+  const frameRadius = radius + (showPolarity ? 0.55 : 0.2);
 
   return (
     <>
       <hemisphereLight args={["#f4f7ff", "#24143f", 0.92]} />
       <directionalLight position={[5, 7, 6]} intensity={1.2} />
       <directionalLight position={[-5, -2, -4]} intensity={0.38} />
-      <Controls radius={radius} resetToken={resetToken} />
+      <Controls radius={frameRadius} resetToken={resetToken} />
+      {showPolarity && molecule.dipole ? <DipoleArrow direction={molecule.dipole} radius={radius} /> : null}
       {molecule.bonds.map((bond) => (
         <BondMesh key={`${bond.a}-${bond.b}-${bond.order}`} bond={bond} atomById={atomById} gap={bondGap} />
       ))}
@@ -296,10 +408,14 @@ function Scene({
           key={atom.id}
           atom={atom}
           selected={atom.id === selectedAtomId}
+          showPolarity={showPolarity}
           onSelect={(id) => onSelectAtom(selectedAtomId === id ? null : id)}
           pointer={pointer}
         />
       ))}
+      {showPolarity
+        ? molecule.atoms.map((atom) => (atom.charge ? <ChargeLabel key={`charge-${atom.id}`} atom={atom} /> : null))
+        : null}
     </>
   );
 }
