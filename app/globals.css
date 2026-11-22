@@ -39,6 +39,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow: hidden;
   width: min(1120px, 100%);
   margin: 0 auto;
   padding:
@@ -185,13 +186,14 @@ button:disabled {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .stage {
   position: relative;
-  flex: 1;
-  min-height: 230px;
+  flex: 1 1 0;
+  min-height: 200px;
   border-radius: 28px;
   overflow: hidden;
   touch-action: none;
@@ -226,11 +228,22 @@ button:disabled {
 }
 
 .panel {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   background: var(--cream);
   color: var(--ink);
   border-radius: 24px;
-  padding: 12px 14px 10px;
+  padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
   box-shadow: 0 12px 28px rgba(8, 3, 20, 0.22);
+}
+
+.picker {
+  flex: 0 0 auto;
 }
 
 .title-row h2 {
@@ -471,6 +484,10 @@ button:disabled {
 }
 
 @media (max-height: 740px) {
+  .stage {
+    min-height: 150px;
+  }
+
   .blurb,
   .fact {
     font-size: 0.9rem;
@@ -489,11 +506,25 @@ button:disabled {
   .workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-rows: minmax(0, 1fr) auto;
     align-items: stretch;
   }
 
+  .stage {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+  }
+
   .panel {
-    overflow: auto;
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+  }
+
+  .picker {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .picker-row {

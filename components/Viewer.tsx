@@ -54,11 +54,11 @@ export default function Viewer() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById(`mol-${moleculeId}`)?.scrollIntoView({
-      inline: "center",
-      block: "nearest",
-      behavior: reduceMotion ? "auto" : "smooth",
-    });
+    const button = document.getElementById(`mol-${moleculeId}`);
+    const row = button?.parentElement;
+    if (!button || !row) return;
+    const left = button.offsetLeft - (row.clientWidth - button.clientWidth) / 2;
+    row.scrollTo({ left: Math.max(0, left), behavior: reduceMotion ? "auto" : "smooth" });
   }, [moleculeId]);
 
   function chooseMolecule(id: string) {
@@ -110,6 +110,28 @@ export default function Viewer() {
           />
         </div>
 
+        <section className="picker" aria-label="選擇分子">
+          <div className="picker-row">
+            {molecules.map((item) => {
+              const pressed = item.id === molecule.id;
+              return (
+                <button
+                  key={item.id}
+                  id={`mol-${item.id}`}
+                  type="button"
+                  className="mol-btn"
+                  style={{ background: item.accent }}
+                  aria-pressed={pressed}
+                  onClick={() => chooseMolecule(item.id)}
+                >
+                  <span>{item.name}</span>
+                  <Formula value={item.formula} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         <aside className="panel">
           <div className="title-row">
             <h2>
@@ -158,28 +180,6 @@ export default function Viewer() {
           </ul>
         </aside>
       </div>
-
-      <section className="picker" aria-label="選擇分子">
-        <div className="picker-row">
-          {molecules.map((item) => {
-            const pressed = item.id === molecule.id;
-            return (
-              <button
-                key={item.id}
-                id={`mol-${item.id}`}
-                type="button"
-                className="mol-btn"
-                style={{ background: item.accent }}
-                aria-pressed={pressed}
-                onClick={() => chooseMolecule(item.id)}
-              >
-                <span>{item.name}</span>
-                <Formula value={item.formula} />
-              </button>
-            );
-          })}
-        </div>
-      </section>
     </main>
   );
 }
