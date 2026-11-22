@@ -12,7 +12,8 @@ import {
   trigonalDirection,
   type Vec3,
 } from "@/lib/math";
-import type { Atom, Bond, ElementId, Molecule } from "@/lib/types";
+import { extraMolecules } from "@/lib/species";
+import type { Atom, Bond, CategoryId, ElementId, Molecule } from "@/lib/types";
 
 const TETRAHEDRAL = Math.acos(-1 / 3) * (180 / Math.PI);
 const WATER_ANGLE = 104.5;
@@ -65,6 +66,20 @@ function center(draft: Draft): Draft {
   };
 }
 
+const META: Record<string, { categories: CategoryId[]; keywords: string[] }> = {
+  water: { categories: ["everyday"], keywords: ["water", "水"] },
+  co2: { categories: ["everyday"], keywords: ["carbon dioxide", "乾冰"] },
+  oxygen: { categories: ["diatomic"], keywords: ["oxygen", "氧氣"] },
+  hydrogen: { categories: ["diatomic"], keywords: ["hydrogen", "氫氣"] },
+  nitrogen: { categories: ["diatomic"], keywords: ["nitrogen", "氮氣"] },
+  methane: { categories: ["everyday", "organic"], keywords: ["methane", "天然氣"] },
+  ammonia: { categories: ["everyday", "acid"], keywords: ["ammonia", "氨水", "阿摩尼亞"] },
+  ethanol: { categories: ["everyday", "organic"], keywords: ["ethanol", "alcohol", "酒精"] },
+  glucose: { categories: ["everyday"], keywords: ["glucose", "血糖"] },
+  salt: { categories: ["acid", "crystal"], keywords: ["salt", "sodium chloride", "食鹽", "氯化鈉"] },
+  caffeine: { categories: ["everyday"], keywords: ["caffeine", "咖啡", "茶"] },
+};
+
 function molecule(
   id: string,
   name: string,
@@ -74,6 +89,7 @@ function molecule(
   draft: Draft,
 ): Molecule {
   const centered = center(draft);
+  const meta = META[id] ?? { categories: [], keywords: [] };
   return applyPolarity({
     id,
     name,
@@ -82,6 +98,8 @@ function molecule(
     polarityNote: "",
     dipole: null,
     accent,
+    categories: meta.categories,
+    keywords: meta.keywords,
     atoms: centered.atoms,
     bonds: centered.bonds,
   });
@@ -526,7 +544,7 @@ function salt(): Draft {
   return draft;
 }
 
-export const molecules: Molecule[] = [
+const coreMolecules: Molecule[] = [
   molecule(
     "water",
     "水",
@@ -616,6 +634,8 @@ export const molecules: Molecule[] = [
     caffeine(),
   ),
 ];
+
+export const molecules: Molecule[] = [...coreMolecules, ...extraMolecules];
 
 const byId = new Map(molecules.map((item) => [item.id, item]));
 

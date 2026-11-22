@@ -1,6 +1,30 @@
 import type { Vec3 } from "@/lib/math";
 
-export type ElementId = "H" | "C" | "N" | "O" | "Na" | "Cl";
+export type ElementId =
+  | "H"
+  | "He"
+  | "C"
+  | "N"
+  | "O"
+  | "Na"
+  | "Mg"
+  | "Al"
+  | "S"
+  | "Cl"
+  | "K"
+  | "Ca"
+  | "Fe"
+  | "Cu";
+
+export type CategoryId =
+  | "elements"
+  | "diatomic"
+  | "everyday"
+  | "acid"
+  | "ions"
+  | "organic"
+  | "crystal"
+  | "carbon";
 
 export type AtomCharge = {
   /** Negative is δ− or an anion. Used only to point the dipole arrow. */
@@ -45,6 +69,9 @@ export type Molecule = {
    */
   dipole: Vec3 | null;
   accent: string;
+  categories: CategoryId[];
+  /** Extra search words: English names, textbook nicknames, fragments like 氫氧. */
+  keywords: string[];
   atoms: Atom[];
   bonds: Bond[];
 };

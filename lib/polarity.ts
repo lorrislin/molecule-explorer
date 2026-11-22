@@ -93,12 +93,13 @@ const NOTES: Record<string, string> = {
 export function applyPolarity(molecule: Molecule): Molecule {
   const atoms = molecule.atoms.map((atom) => ({
     ...atom,
-    charge: chargeFor(molecule.id, atom),
+    charge: atom.charge ?? chargeFor(molecule.id, atom),
   }));
+  const partials = atoms.some((atom) => atom.charge?.kind === "partial");
   return {
     ...molecule,
     atoms,
-    polarityNote: NOTES[molecule.id] ?? "",
-    dipole: molecule.id === "salt" ? null : dipoleTowardNegative(atoms),
+    polarityNote: NOTES[molecule.id] ?? molecule.polarityNote,
+    dipole: partials ? dipoleTowardNegative(atoms) : null,
   };
 }

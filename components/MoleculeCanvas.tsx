@@ -324,30 +324,33 @@ function AtomMesh({
   atom,
   selected,
   showPolarity,
+  segments,
   onSelect,
   pointer,
 }: {
   atom: Atom;
   selected: boolean;
   showPolarity: boolean;
+  segments: number;
   onSelect: (id: string) => void;
   pointer: RefObject<PointerState>;
 }) {
   const info = ELEMENTS[atom.element];
-  const tint = showPolarity && atom.charge ? (atom.charge.value < 0 ? "#ff5b6a" : "#5b93ff") : null;
+  const showCharge = Boolean(atom.charge && (showPolarity || atom.charge.kind === "ionic"));
+  const tint = showCharge && atom.charge ? (atom.charge.value < 0 ? "#ff5b6a" : "#5b93ff") : null;
 
   return (
     <group position={atom.position}>
       <mesh scale={1.055}>
-        <sphereGeometry args={[info.radius, 28, 28]} />
+        <sphereGeometry args={[info.radius, segments, segments]} />
         <meshBasicMaterial color={info.outline} side={BackSide} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[info.radius, 32, 32]} />
+        <sphereGeometry args={[info.radius, segments, segments]} />
         <meshStandardMaterial
           color={info.color}
           emissive={tint ?? (selected ? info.color : "#000000")}
-          emissiveIntensity={tint ? 0.62 : selected ? 0.42 : 0}
+          emissiveIntensity={tint ? (showPolarity ? 0.62 : 0.4) : selected ? 0.42 : 0}
           roughness={atom.element === "H" ? 0.38 : 0.34}
           metalness={0.06}
         />
@@ -392,6 +395,7 @@ function Scene({
   const radius = moleculeExtent(molecule);
   const bondGap = Math.max(0.16, radius * 0.09);
   const frameRadius = radius + (showPolarity ? 0.55 : 0.2);
+  const segments = molecule.atoms.length > 40 ? 14 : 24;
 
   return (
     <>
@@ -409,13 +413,16 @@ function Scene({
           atom={atom}
           selected={atom.id === selectedAtomId}
           showPolarity={showPolarity}
+          segments={segments}
           onSelect={(id) => onSelectAtom(selectedAtomId === id ? null : id)}
           pointer={pointer}
         />
       ))}
-      {showPolarity
-        ? molecule.atoms.map((atom) => (atom.charge ? <ChargeLabel key={`charge-${atom.id}`} atom={atom} /> : null))
-        : null}
+      {molecule.atoms.map((atom) =>
+        atom.charge && (showPolarity || atom.charge.kind === "ionic") ? (
+          <ChargeLabel key={`charge-${atom.id}`} atom={atom} />
+        ) : null,
+      )}
     </>
   );
 }

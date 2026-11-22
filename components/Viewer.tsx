@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Formula from "@/components/Formula";
+import MoleculePicker from "@/components/MoleculePicker";
 import { ELEMENT_ORDER, ELEMENTS } from "@/lib/elements";
 import { getMolecule, molecules } from "@/lib/molecules";
 import type { ElementId } from "@/lib/types";
@@ -122,27 +123,7 @@ export default function Viewer() {
           </button>
         </div>
 
-        <section className="picker" aria-label="選擇分子">
-          <div className="picker-row">
-            {molecules.map((item) => {
-              const pressed = item.id === molecule.id;
-              return (
-                <button
-                  key={item.id}
-                  id={`mol-${item.id}`}
-                  type="button"
-                  className="mol-btn"
-                  style={{ background: item.accent }}
-                  aria-pressed={pressed}
-                  onClick={() => chooseMolecule(item.id)}
-                >
-                  <span>{item.name}</span>
-                  <Formula value={item.formula} />
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <MoleculePicker molecules={molecules} selectedId={molecule.id} onSelect={chooseMolecule} />
 
         <aside className="panel">
           <div className="title-row">

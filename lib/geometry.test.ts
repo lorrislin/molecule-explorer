@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { bondAngleDeg, dihedralDeg, distance, place } from "@/lib/math";
 import { molecules } from "@/lib/molecules";
+import { filterMolecules } from "@/lib/species";
 import type { ElementId, Molecule } from "@/lib/types";
 
 function byId(id: string): Molecule {
@@ -44,7 +45,8 @@ for (let i = 0; i < substituents.length; i += 1) {
 
 for (const molecule of molecules) {
   assert.ok(molecule.blurb.length > 20, `${molecule.id} blurb is too short`);
-  assert.ok(molecule.atoms.length > 1, `${molecule.id} needs atoms`);
+  assert.ok(molecule.atoms.length >= 1, `${molecule.id} needs atoms`);
+  assert.ok(molecule.categories.length > 0, `${molecule.id} needs a category`);
   const ids = new Set<string>();
   for (const atom of molecule.atoms) {
     assert.ok(!ids.has(atom.id), `${molecule.id} duplicate atom ${atom.id}`);
@@ -204,5 +206,51 @@ assert.equal(byId("salt").dipole, null);
 assert.equal(byId("salt").atoms.find((atom) => atom.element === "Na")?.charge?.label, "Na⁺");
 assert.equal(byId("salt").atoms.find((atom) => atom.element === "Cl")?.charge?.label, "Cl⁻");
 assert.ok(molecules.every((item) => item.polarityNote.length > 12));
+
+assert.equal(byId("c60").atoms.length, 60);
+assert.equal(byId("c60").bonds.length, 90);
+assert.ok(byId("c60").atoms.every((atom) => atom.element === "C"));
+
+const diamond = byId("diamond");
+const diamondDegree = new Map<string, number>();
+for (const bond of diamond.bonds) {
+  diamondDegree.set(bond.a, (diamondDegree.get(bond.a) ?? 0) + 1);
+  diamondDegree.set(bond.b, (diamondDegree.get(bond.b) ?? 0) + 1);
+}
+assert.equal(Math.max(...diamondDegree.values()), 4);
+
+const graphiteZ = [...new Set(byId("graphite").atoms.map((atom) => Math.round(atom.position[2] * 10) / 10))].sort(
+  (a, b) => a - b,
+);
+assert.equal(graphiteZ.length, 2);
+assert.ok(Math.abs(Math.abs(graphiteZ[1] - graphiteZ[0]) - 3.35) < 0.05);
+assert.ok(byId("graphene").atoms.every((atom) => Math.abs(atom.position[2]) < 0.05));
+
+const tube = byId("nanotube");
+const tubeDegree = new Map<string, number>();
+for (const bond of tube.bonds) {
+  tubeDegree.set(bond.a, (tubeDegree.get(bond.a) ?? 0) + 1);
+  tubeDegree.set(bond.b, (tubeDegree.get(bond.b) ?? 0) + 1);
+}
+for (const degree of tubeDegree.values()) {
+  assert.ok(degree === 2 || degree === 3, `nanotube atom degree ${degree}`);
+}
+for (const bond of tube.bonds) {
+  const length = distance(
+    tube.atoms.find((atom) => atom.id === bond.a)!.position,
+    tube.atoms.find((atom) => atom.id === bond.b)!.position,
+  );
+  assert.ok(length > 1.25 && length < 1.6, `nanotube bond ${length.toFixed(3)}`);
+}
+
+assert.equal(byId("hcl").atoms.find((atom) => atom.element === "Cl")?.charge?.label, "δ−");
+assert.equal(byId("ion-na").atoms[0]?.charge?.label, "Na⁺");
+assert.equal(byId("ion-fe").atoms[0]?.charge?.label, "Fe³⁺");
+assert.equal(byId("atom-c").atoms.length, 1);
+assert.equal(byId("atom-c").bonds.length, 0);
+assert.ok(filterMolecules(molecules, "all", "NaOH").some((item) => item.id === "naoh"));
+assert.ok(filterMolecules(molecules, "ions", "氫氧").some((item) => item.id === "hydroxide"));
+assert.ok(filterMolecules(molecules, "carbon", "").some((item) => item.id === "c60"));
+assert.ok(molecules.length >= 60);
 
 console.log(`geometry ok (${molecules.length} molecules)`);
